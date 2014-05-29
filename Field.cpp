@@ -4,8 +4,6 @@
 //#include <OpenCV/OpenCV.h>
 //#include <OpenCV/highgui.h>
 #include <math.h>
-
-#include <stdlib.h>
 #include <time.h>
 
 
@@ -23,14 +21,15 @@ static const int gridCellWidth = 5;
 static const int RobotRadius = 300;
 static const int RobotPixelRadius = 3;
 
-static const int actualLength = 1200;
+static const int actualLength = 900; //1200 uncomment for text
 static const int actualWidth = 600;
+
 
 IplImage *img = cvCreateImage(cvSize(actualLength, actualWidth), IPL_DEPTH_8U, 3);
 Mat Image(actualWidth, actualLength, CV_8UC3, Scalar(0));
 
 map<pair<int,int>, int> orientations;
-
+vector<RrtLine> rrtLines;
 
 
 int gridResolutionLength = gridLength / L;
@@ -104,14 +103,21 @@ void Field::initFieldGrid()
 	
 }
 
+void Field::insertRRTLines(pair<int,int> from, pair<int,int> to)
+{
+	RrtLine line;
+	line.from = Point(gridResolutionLength*from.first, gridResolutionLength*from.second);
+	line.to = Point(gridResolutionLength*to.first, gridResolutionLength*to.second);
+	rrtLines.push_back(line);
+}
 
 void Field::cvDrawGrid(){
-	CvScalar green = cvScalar(100,colorMax,10);
-	CvScalar white = cvScalar(colorMax,colorMax,colorMax);
-	CvScalar black = cvScalar(0,0,0);
-	CvScalar red = cvScalar(0,0,colorMax);
-	CvScalar orange = cvScalar(0, colorMax/2, colorMax);
-	CvScalar blue = cvScalar(colorMax, 0, 0);
+	CvScalar green = cvScalar(100,colorMax,10); //field
+	CvScalar white = cvScalar(colorMax,colorMax,colorMax); //lines
+	CvScalar black = cvScalar(0,0,0); //rrtLines
+	CvScalar red = cvScalar(0,0,colorMax); //friend
+	CvScalar orange = cvScalar(0, colorMax/2, colorMax); //ball
+	CvScalar blue = cvScalar(colorMax, 0, 0); //opponent
 	CvScalar paintColor = green;
 	
 	for (int i=0;i<L;i++){
@@ -151,7 +157,17 @@ void Field::cvDrawGrid(){
 		line(Image, pt1, pt2, black, 1, 8);
 	}
 	
-	string text = "Text";
+	vector<RrtLine>::iterator it1;
+	for(it1=rrtLines.begin(); it1!=rrtLines.end(); it1++)
+	{
+		line(Image, it1->from, it1->to, black, 2, 8);
+	}
+	
+	//print rrt Lines
+	
+	
+	//uncomment for text area
+	/*string text = "Text";
 	int fontFace = FONT_HERSHEY_SIMPLEX;
 	double fontScale = .5;
 	int thickness = 1;  
@@ -163,7 +179,7 @@ void Field::cvDrawGrid(){
 	// then put the text itself
 	putText(Image, text, textOrg, fontFace, fontScale,
 			Scalar::all(255), thickness, 8);
-	
+	*/
 	imshow( "Field", Image );
 	cvWaitKey(0);	
 }

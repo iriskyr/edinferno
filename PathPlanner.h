@@ -4,11 +4,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <utility>
+
+
 
 class PathPlanner{
-	public:
+	public:	
 	void rrt(int posX, int posY, int targetX, int targetY);
-
+	private:
+	int timeSteps_;
+	//std::set<std::pair<int, int> > rrtSet;
 };
 
 #endif
