@@ -13,12 +13,22 @@ struct Line
 	pair<int,int> from;
 	pair<int,int> to;
 };
+
+
+struct treeNode
+{
+	pair<int,int> node;
+	pair<int,int> fatherNode; 
+};
+
 Field f;
 static const int rangeX = 180;
 static const int rangeY = 120;
 
 static set<pair<int,int> > rrtSet;
+static set<treeNode> treeSet;
 static vector<Line> obstacles;
+static int ObstacleSize = 3;
 
 
 pair<int,int> findClosestVertexToPoint(pair<int,int> point)
@@ -40,6 +50,50 @@ pair<int,int> findClosestVertexToPoint(pair<int,int> point)
 	}
 	return make_pair(minX, minY);
 }
+
+inline bool operator<(const treeNode& lhs, const treeNode& rhs)
+{
+  return (lhs.node.first < rhs.node.first || lhs.node.second < rhs.node.second);
+}
+
+pair<int,int> findClosestVertexToPoint1(pair<int,int> point)
+{
+	int minDistance = 2000;
+	int minX = 0; int minY = 0;
+	set<treeNode>::iterator it;
+	
+	/*treeNode tr;
+	pair<int,int> a = make_pair(1,2);
+	tr.node = a;
+	pair<int,int> b = make_pair(1,2);
+	tr.fatherNode = b;
+	treeSet.insert(tr);
+	
+	
+	it = treeSet.begin();
+	pair<int,int> p = it->node;
+	int x = p.first;
+	cout << " x " << x << endl;*/
+	//cout << " TR " <<  tr->node << endl;
+	for (it = treeSet.begin(); it != treeSet.end(); it++) {
+		int x =  abs((it->node).first - point.first);
+		int y = abs((it->node).second - point.second);
+	  int distance = x + y;
+	  ///cout << "in " << it->first << " " << it->second << " dist " << distance << endl;
+		if (minDistance > distance) 
+		{
+			minDistance = distance;
+			minX = (it->node).first;
+			minY = (it->node).second;
+		}
+	}
+	
+	//treeNode n ;
+	//cout << "node " << (n.node).first << cout;
+	
+	return make_pair(minX, minY);
+}
+
 
 float mag(const pair<int,int> v) {
   return sqrt(v.first * v.first + v.second * v.second);
@@ -130,40 +184,99 @@ bool checkCollision(pair<int,int> from, pair<int,int> to)
 	return false;
 }
  
+void insertInTreeSet(pair<int,int> from, pair<int,int> to)
+{
+	treeNode tr;
+	tr.node = to;
+	tr.fatherNode = from;
+	
+	treeSet.insert(tr);
+} 
+
+
+float distanceToTarget(int fromX, int fromY, int targetX, int targetY)
+{
+	return sqrt((fromX-targetX)*(fromX-targetX) + (fromY-targetY)*(fromY-targetY));
+}
+ 
+vector<pair<int,int> > waypoints;
+ 
+void reconstructPath(int fromX, int fromY)
+{
+	set<treeNode>::iterator it;
+	//cout << "from x " << fromX << " y " << fromY  << endl;
+	if(fromX == -1 && fromY == -1)
+		return;
+	
+	waypoints.push_back(make_pair(fromX,fromY));
+
+	for (it = treeSet.begin(); it != treeSet.end(); it++) {
+		if(((it->node).first == fromX) && ((it->node).second == fromY))
+		{
+			reconstructPath((it->fatherNode).first, (it->fatherNode).second);
+		}	
+		if((it->fatherNode).first == -1 && (it->fatherNode).second == -1)
+			return;
+	}
+
+}
+ 
+void printPath(vector<pair<int,int> > waypoints)
+{
+	vector<pair<int,int> >::iterator it;
+	for(it = waypoints.begin(); it!=waypoints.end(); ++it)
+	{
+		cout << " path " << it->first << " " << it->second << endl;
+	}
+} 
+ 
 void rrt(int posX, int posY, int targetX, int targetY)
 {
 	//TODO: check if start is directly connected to goal
+	/*if(!checkCollision(make_pair(posX, posY), make_pair(targetX, targetY))){
+		rrtSet.insert(make_pair(targetX, targetY));
+		f.insertRRTLines(make_pair(posX, posY), make_pair(targetX, targetY));
+		f.cvDrawGrid();
+		return;
+	}*/
 	int toX, toY;
+	pair<int,int> from = make_pair(posX,posY);
+	pair<int,int> to = make_pair(targetX, targetY);
 	timeval start, now;
   gettimeofday(&start, 0);
   do
   {
+		/*if(!checkCollision(from, to)){
+			rrtSet.insert(to);
+			f.insertRRTLines(from, to);
+			f.cvDrawGrid();
+			return;
+		}*/
     gettimeofday(&now, 0);
   	//pick random location
 	  toX = (int) rand()%(L-1) + 1;//rand() % rangeX;
 	  toY = (int) rand()%(W-1) + 1;//rand() % rangeY;
-	  cout << "AAAA " << toX << " " << toY << endl;
+	  to = make_pair(toX, toY);
 	  //find vertex closest to this point
-	  pair<int,int> closestPoint = findClosestVertexToPoint(make_pair(toX,toY));
+	  from = findClosestVertexToPoint1(to);
 	  //cout << "I choose " <<  closestPoint.first << " " << closestPoint.second << endl;
 	  //add edge if there is collision free path
-	  cout << checkCollision(closestPoint, make_pair(toX, toY)) << endl;
-	  if(!checkCollision(closestPoint, make_pair(toX, toY))){
-			rrtSet.insert(make_pair(toX, toY));
-			f.insertRRTLines(closestPoint, make_pair(toX, toY));
+	  //cout << checkCollision(from, to) << endl;
+	  if(!checkCollision(from, to)){
+			rrtSet.insert(to);
+			insertInTreeSet(from,to);
+			f.insertRRTLines(from, to);
 		}
 		f.cvDrawGrid();
-	//}
-	//cout << rrtSet.size() << endl;
-	//set<pair<int,int> >::iterator it;
-  //for (it = rrtSet.begin(); it != rrtSet.end(); it++) {
-  //    cout << it->first <<" " << it->second << endl;
   if(toX == targetX) cout << "targetX " << toX << endl;
   if(toY == targetY) cout << "targetY " << toY << endl;
-  }while ((toX != targetX || toY != targetY) && !moreThanSecondsAgo(100, start , now))	;
+  }while ((distanceToTarget(toX, toY, targetX, targetY) > 10) && !moreThanSecondsAgo(100, start , now))	;
   if(moreThanSecondsAgo(100, start , now)) cout << "time " << endl;
-  
+  reconstructPath(toX, toY);
+  printPath(waypoints);
+  f.drawPath(waypoints);
 }
+
 
 void insertObstacle(pair<int,int> obstacle)
 {
@@ -173,11 +286,11 @@ void insertObstacle(pair<int,int> obstacle)
 	
 	for(int i=0; i<8; i+=2)
 	{
-		l.from = make_pair(obstacle.first + augmentx[i]*RobotPixelRadius*2, obstacle.second + augmenty[i]*RobotPixelRadius*2);
-		l.to = make_pair(obstacle.first + augmentx[i+1]*RobotPixelRadius*2 , obstacle.second + augmenty[i+1]*RobotPixelRadius*2);
+		l.from = make_pair(obstacle.first + augmentx[i]*ObstacleSize*2, obstacle.second + augmenty[i]*ObstacleSize*2);
+		l.to = make_pair(obstacle.first + augmentx[i+1]*ObstacleSize*2 , obstacle.second + augmenty[i+1]*ObstacleSize*2);
 		obstacles.push_back(l);
 	}
-	cout << obstacles.size() << endl;
+	//cout << obstacles.size() << endl;
 }
 
 int main(int argc, char** argv)
@@ -200,6 +313,9 @@ int main(int argc, char** argv)
 	f.addElement(BALL, ballx, bally, 0);
 	
 	rrtSet.insert(pair<int,int>(robotx, roboty));
+	
+	insertInTreeSet(make_pair(-1, -1), make_pair(robotx, roboty));
+	cout << "robotx " << robotx << " y " << roboty << endl;
 //	rrtSet.insert(make_pair(2,3));
 //	rrtSet.insert(make_pair(2,2));
 //	rrtSet.insert(make_pair(2,4));

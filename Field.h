@@ -20,10 +20,11 @@ struct RrtLine
 
 class Field{
 	public:
-		
+		std::vector<std::pair<int,int> > path;
 		void initFieldGrid();
 		void cvDrawGrid();
 		void addElement(elementTypes element, int posx, int posy, int orientation);
 		void insertRRTLines(std::pair<int,int> from, std::pair<int,int> to);
+		void drawPath(std::vector<std::pair<int,int> > _path);
 };
 #endif

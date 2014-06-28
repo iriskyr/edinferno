@@ -103,6 +103,13 @@ void Field::initFieldGrid()
 	
 }
 
+
+void Field::drawPath(vector<pair<int,int> > _path)
+{
+  path.resize(_path.size());
+  copy(_path.begin(),_path.end(),path.begin());
+}
+
 void Field::insertRRTLines(pair<int,int> from, pair<int,int> to)
 {
 	RrtLine line;
@@ -163,8 +170,20 @@ void Field::cvDrawGrid(){
 		line(Image, it1->from, it1->to, black, 2, 8);
 	}
 	
-	//print rrt Lines
 	
+	//print the path red line
+	vector<pair<int,int> >::iterator it2;
+	if(path.size() > 0 )
+	{
+		pair<int,int> point1 = path.front();
+		Point pt1(gridResolutionLength*(point1.first),gridResolutionWidth*(point1.second));
+		for (it2=path.begin() ; it2!=path.end(); ++it2)
+		{	
+			Point pt2(gridResolutionLength*(it2->first), gridResolutionWidth*(it2->second));
+			line(Image, pt1, pt2, red, 2, 8);
+			pt1 = pt2;	
+		}
+	}
 	
 	//uncomment for text area
 	/*string text = "Text";
