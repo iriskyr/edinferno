@@ -182,6 +182,7 @@ void Field::cvDrawGrid(){
 			Point pt2(gridResolutionLength*(it2->first), gridResolutionWidth*(it2->second));
 			line(Image, pt1, pt2, red, 2, 8);
 			pt1 = pt2;	
+			cvWaitKey(0);	cvWaitKey(0);	cvWaitKey(0);	cvWaitKey(0);	cvWaitKey(0);	cvWaitKey(0);	
 		}
 	}
 	
@@ -200,6 +201,7 @@ void Field::cvDrawGrid(){
 			Scalar::all(255), thickness, 8);
 	*/
 	imshow( "Field", Image );
+	
 	cvWaitKey(0);	
 }
 

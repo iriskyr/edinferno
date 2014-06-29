@@ -200,6 +200,27 @@ float distanceToTarget(int fromX, int fromY, int targetX, int targetY)
 }
  
 vector<pair<int,int> > waypoints;
+
+vector<pair<int,int> > smoothPath(int targetX, int targetY)
+{
+	vector<pair<int,int> > waypoints1; 
+	vector<pair<int,int> >::reverse_iterator it;
+	for(it = waypoints.rbegin();it!=waypoints.rend();it++)
+	{
+		if (!checkCollision(make_pair(it->first, it->second),make_pair(targetX, targetY)))
+		{
+			waypoints1.push_back(make_pair(it->first, it->second));
+			waypoints1.push_back(make_pair(targetX, targetY));
+			return waypoints1;
+		}
+		else
+			waypoints1.push_back(make_pair(it->first, it->second));
+			
+		//cout << it->first << " " << it->second << endl;
+	}
+	waypoints1.push_back(make_pair(targetX, targetY));
+	return waypoints1;
+}
  
 void reconstructPath(int fromX, int fromY)
 {
@@ -215,8 +236,8 @@ void reconstructPath(int fromX, int fromY)
 		{
 			reconstructPath((it->fatherNode).first, (it->fatherNode).second);
 		}	
-		if((it->fatherNode).first == -1 && (it->fatherNode).second == -1)
-			return;
+		//if((it->fatherNode).first == -1 && (it->fatherNode).second == -1)
+			//return;
 	}
 
 }
@@ -233,12 +254,20 @@ void printPath(vector<pair<int,int> > waypoints)
 void rrt(int posX, int posY, int targetX, int targetY)
 {
 	//TODO: check if start is directly connected to goal
-	/*if(!checkCollision(make_pair(posX, posY), make_pair(targetX, targetY))){
+	if(!checkCollision(make_pair(posX, posY), make_pair(targetX, targetY))){
 		rrtSet.insert(make_pair(targetX, targetY));
 		f.insertRRTLines(make_pair(posX, posY), make_pair(targetX, targetY));
-		f.cvDrawGrid();
+		insertInTreeSet(make_pair(posX,posY), make_pair(targetX, targetY));
+		///f.cvDrawGrid();
+		
+		reconstructPath(targetX, targetY);
+		//printPath(waypoints);
+		vector<pair<int,int> > path = smoothPath(targetX, targetY);
+		//printPath(path);
+		//f.drawPath(waypoints);
+		f.drawPath(path);
 		return;
-	}*/
+	}
 	int toX, toY;
 	pair<int,int> from = make_pair(posX,posY);
 	pair<int,int> to = make_pair(targetX, targetY);
@@ -246,12 +275,6 @@ void rrt(int posX, int posY, int targetX, int targetY)
   gettimeofday(&start, 0);
   do
   {
-		/*if(!checkCollision(from, to)){
-			rrtSet.insert(to);
-			f.insertRRTLines(from, to);
-			f.cvDrawGrid();
-			return;
-		}*/
     gettimeofday(&now, 0);
   	//pick random location
 	  toX = (int) rand()%(L-1) + 1;//rand() % rangeX;
@@ -268,13 +291,16 @@ void rrt(int posX, int posY, int targetX, int targetY)
 			f.insertRRTLines(from, to);
 		}
 		f.cvDrawGrid();
-  if(toX == targetX) cout << "targetX " << toX << endl;
-  if(toY == targetY) cout << "targetY " << toY << endl;
   }while ((distanceToTarget(toX, toY, targetX, targetY) > 10) && !moreThanSecondsAgo(100, start , now))	;
   if(moreThanSecondsAgo(100, start , now)) cout << "time " << endl;
+  rrtSet.insert(make_pair(targetX, targetY));
+  insertInTreeSet(make_pair(toX,toY), make_pair(targetX, targetY));
   reconstructPath(toX, toY);
-  printPath(waypoints);
-  f.drawPath(waypoints);
+  //printPath(waypoints);
+  vector<pair<int,int> > path = smoothPath(targetX, targetY);
+	//printPath(path);
+	//f.drawPath(waypoints);
+  f.drawPath(path);
 }
 
 
@@ -312,10 +338,10 @@ int main(int argc, char** argv)
 	int bally = (int) rand()%(W-1) + 1;
 	f.addElement(BALL, ballx, bally, 0);
 	
-	rrtSet.insert(pair<int,int>(robotx, roboty));
+	rrtSet.insert(make_pair(robotx, roboty));
 	
 	insertInTreeSet(make_pair(-1, -1), make_pair(robotx, roboty));
-	cout << "robotx " << robotx << " y " << roboty << endl;
+	//cout << "robotx " << robotx << " y " << roboty << " target x " << ballx << " y " << bally << endl;
 //	rrtSet.insert(make_pair(2,3));
 //	rrtSet.insert(make_pair(2,2));
 //	rrtSet.insert(make_pair(2,4));
